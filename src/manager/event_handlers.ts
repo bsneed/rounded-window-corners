@@ -175,6 +175,7 @@ export function onSettingsChanged(key: SchemasKeys): void {
         case 'global-rounded-corner-settings':
         case 'custom-rounded-corner-settings':
         case 'border-color':
+        case 'unfocused-border-color':
         case 'border-width':
         case 'tweak-kitty-terminal':
             refreshAllRoundedCorners();
@@ -385,6 +386,7 @@ function refreshShadow(actor: ExtensionsWindowActor) {
     const {border_radius, padding} = getRoundedCornersCfg(win);
 
     updateShadowActorStyle(win, shadow, border_radius, shadowSettings, padding);
+    refreshRoundedCorners(actor);
 }
 
 /** Refresh the style of all shadow actors */
@@ -418,6 +420,11 @@ function refreshRoundedCorners(actor: ExtensionsWindowActor): void {
 
     const windowContentOffset = computeWindowContentsOffset(win);
 
+    const focused = win.appears_focused;
+    const border_color = focused
+        ? settings().border_color
+        : settings().unfocused_border_color;
+
     // When window size is changed, update uniforms for corner rounding shader.
     effect.update_uniforms(
         WindowScaleFactor(win),
@@ -425,7 +432,7 @@ function refreshRoundedCorners(actor: ExtensionsWindowActor): void {
         computeBounds(actor, windowContentOffset),
         {
             width: settings().border_width,
-            color: settings().border_color,
+            color: border_color,
         },
     );
 
@@ -442,6 +449,18 @@ function refreshRoundedCorners(actor: ExtensionsWindowActor): void {
 
 /** Refresh rounded corners settings for all windows. */
 function refreshAllRoundedCorners() {
-    global.get_window_actors().forEach(refreshRoundedCorners);
+    /* There seems to be an issue w/ forEach not actually calling refreshRoundedCorners
+    for all windows.  This issue can be seen by having a few windows open, and changing
+    the unfocused color.  The color will only change for the focused window.
+
+    //global.get_window_actors().forEach(refreshRoundedCorners);
+
+    Doing it by hand seems to work fine though.
+        -- bsneed
+     */
+    const windowActors = global.get_window_actors();
+    for (const actor of windowActors) {
+        refreshRoundedCorners(actor);
+    }
     refreshAllShadows();
 }
