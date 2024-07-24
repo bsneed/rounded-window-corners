@@ -449,18 +449,6 @@ function refreshRoundedCorners(actor: ExtensionsWindowActor): void {
 
 /** Refresh rounded corners settings for all windows. */
 function refreshAllRoundedCorners() {
-    /* There seems to be an issue w/ forEach not actually calling refreshRoundedCorners
-    for all windows.  This issue can be seen by having a few windows open, and changing
-    the unfocused color.  The color will only change for the focused window.
-
-    //global.get_window_actors().forEach(refreshRoundedCorners);
-
-    Doing it by hand seems to work fine though.
-        -- bsneed
-     */
-    const windowActors = global.get_window_actors();
-    for (const actor of windowActors) {
-        refreshRoundedCorners(actor);
-    }
+    global.get_window_actors().forEach(actor => refreshRoundedCorners(actor));
     refreshAllShadows();
 }
